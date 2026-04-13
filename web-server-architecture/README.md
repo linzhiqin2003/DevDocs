@@ -86,6 +86,9 @@
 **后台任务系统：**
 - [Redis 与 Celery：后台任务系统](./redis-celery.md) — 消息队列、任务分发、定时任务
 
+**协议标准：**
+- [WSGI 与 ASGI](./wsgi-asgi.md) — 应用服务器和框架之间的接口协议、同步 vs 异步模型
+
 **部署与运维：**
 - [Docker：把整个环境装进箱子](./docker.md) — 镜像、容器、Compose 编排、迁移
 

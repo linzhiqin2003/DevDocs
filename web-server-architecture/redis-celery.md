@@ -1,6 +1,6 @@
 # Redis 与 Celery：后台任务系统
 
-> 回到 [总览](./README.md) | 相关：[Nginx](./nginx.md) · [Gunicorn](./gunicorn.md) · [Uvicorn](./uvicorn.md) · [Django](./django.md) · [Docker](./docker.md) · [进程间通信](./process-communication.md) · [Unix 哲学](./unix-philosophy.md)
+> 回到 [总览](./README.md) | 相关：[Nginx](./nginx.md) · [Gunicorn](./gunicorn.md) · [Uvicorn](./uvicorn.md) · [Django](./django.md) · [Docker](./docker.md) · [进程间通信](./process-communication.md) · [WSGI & ASGI](./wsgi-asgi.md) · [Unix 哲学](./unix-philosophy.md)
 
 ## 先说清楚它们和请求链路的关系
 

@@ -115,12 +115,23 @@ def parse_markdown(filepath):
 
     summary = summary.strip()[:200]
 
+    # 处理内部链接：./xxx.md → /blog/slug（由同目录其他文件的 slug 决定）
+    # 先收集同目录文件的 title→slug 映射，在 sync 阶段处理
+    # 这里先清理导航行（> 回到 [总览]... 这行对博客读者没用）
+    lines = text.splitlines()
+    cleaned_lines = []
+    for line in lines:
+        if line.strip().startswith("> 回到"):
+            continue
+        cleaned_lines.append(line)
+    cleaned_content = "\n".join(cleaned_lines)
+
     content_hash = hashlib.sha256(text.encode()).hexdigest()
 
     return {
         "title": title,
         "summary": summary,
-        "content": text,
+        "content": cleaned_content,
         "content_hash": content_hash,
     }
 
@@ -194,7 +205,35 @@ def scan_articles():
     return articles
 
 
-def sync_article(base_url, token, filepath, state, dry_run=False):
+def convert_internal_links(content, slug_map):
+    """将 ./xxx.md 链接转为 /blog/{slug} 内链"""
+    def replace_link(m):
+        text = m.group(1)
+        filename = m.group(2)
+        if filename in slug_map:
+            return f"[{text}](/blog/{slug_map[filename]})"
+        return text  # 找不到映射就只保留文本
+
+    return re.sub(r'\[([^\]]+)\]\(\./([^)]+\.md)(?:#[^)]*)?\)', replace_link, content)
+
+
+def build_slug_map(articles):
+    """构建 filename → slug 映射（slug = slugify(title)）"""
+    from urllib.parse import quote
+    slug_map = {}
+    for filepath in articles:
+        parsed = parse_markdown(filepath)
+        if not parsed:
+            continue
+        title = parsed["title"]
+        # Django slugify with allow_unicode
+        slug = re.sub(r'[^\w\s-]', '', title.lower()).strip()
+        slug = re.sub(r'[-\s]+', '-', slug)
+        slug_map[filepath.name] = quote(slug)
+    return slug_map
+
+
+def sync_article(base_url, token, filepath, state, slug_map, dry_run=False):
     """同步单篇文章"""
     rel_path = str(filepath.relative_to(REPO_ROOT))
     folder_name = filepath.parent.name
@@ -203,6 +242,9 @@ def sync_article(base_url, token, filepath, state, dry_run=False):
     if not parsed:
         print(f"  SKIP {rel_path} (no title found)")
         return
+
+    # 转换内部链接
+    parsed["content"] = convert_internal_links(parsed["content"], slug_map)
 
     existing = state.get(rel_path)
 
@@ -282,6 +324,9 @@ def main():
     # 加载状态
     state = load_state()
 
+    # 构建内部链接映射
+    slug_map = build_slug_map(articles)
+
     # 同步
     created = 0
     updated = 0
@@ -304,7 +349,7 @@ def main():
         else:
             created += 1
 
-        sync_article(base_url, token, filepath, state, args.dry_run)
+        sync_article(base_url, token, filepath, state, slug_map, args.dry_run)
 
     # 保存状态
     if not args.dry_run:

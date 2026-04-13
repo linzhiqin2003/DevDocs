@@ -36,6 +36,7 @@ def api_request(url, method="GET", data=None, token=None):
     headers = {
         "Content-Type": "application/json",
         "Accept": "application/json",
+        "User-Agent": "DevDocs-Publisher/1.0",
     }
     if token:
         headers["Authorization"] = f"Bearer {token}"
@@ -81,21 +82,36 @@ def parse_markdown(filepath):
     if not title:
         return None
 
-    # 提取 summary：跳过标题和导航行后的第一段正文
+    # 提取 summary：跳过标题、导航行、子标题、代码块，取第一段正文
     summary = ""
     in_body = False
+    in_code_block = False
     for line in text.splitlines():
         stripped = line.strip()
-        if stripped.startswith("# "):
+        if stripped.startswith("```"):
+            in_code_block = not in_code_block
             continue
-        if stripped.startswith("> 回到"):
+        if in_code_block:
+            continue
+        if stripped.startswith("#"):
+            if in_body and summary:
+                break
+            continue
+        if stripped.startswith("> "):
+            continue
+        if stripped.startswith("|"):
             continue
         if not stripped:
             if in_body and summary:
                 break
             continue
+        # 清理 markdown 链接语法 [text](url) → text
+        clean = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', stripped)
+        # 清理加粗/斜体
+        clean = re.sub(r'\*\*([^*]+)\*\*', r'\1', clean)
+        clean = re.sub(r'\*([^*]+)\*', r'\1', clean)
         in_body = True
-        summary += stripped + " "
+        summary += clean + " "
 
     summary = summary.strip()[:200]
 

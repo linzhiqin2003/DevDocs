@@ -86,6 +86,9 @@
 **后台任务系统：**
 - [Redis 与 Celery：后台任务系统](./redis-celery.md) — 消息队列、任务分发、定时任务
 
+**框架选型：**
+- [Python Web 框架](./python-web-frameworks.md) — http.server / Flask / FastAPI / Django 的背景、区别与选型
+
 **协议标准：**
 - [WSGI 与 ASGI](./wsgi-asgi.md) — 应用服务器和框架之间的接口协议、同步 vs 异步模型
 
